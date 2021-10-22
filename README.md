@@ -2,7 +2,9 @@
 ## Description
 This is a command-line application that a user can use to manage their company's database. This application uses Node.js, Inquirer, and MySQL.
 ## Usage
-From the console run: node index.js  
+From the console run: node index.js
+  
+![Screenshot](assets/images/screenshot.png)
 ## Credits
 Zach Smith - [GitHub Profile](https://github.com/Lemelisk27)  
 ## Questions  
