@@ -1,6 +1,8 @@
 const inquirer = require("inquirer");
+const mysql = require('mysql2')
+const sqlFunc = require("../util/sql")
 
-function start () {
+function start (pass) {
     inquirer
         .prompt([
             {
@@ -11,7 +13,7 @@ function start () {
             }
         ]).then(startAns => {
             if (startAns.start === "Add Information") {
-                addInfo()
+                addInfo(pass)
             }
             if (startAns.start === "Update Information") {
                 console.log(startAns.start)
@@ -21,11 +23,12 @@ function start () {
             }
             if (startAns.start === "Quit") {
                 console.log("Goodbye")
+                pass.end()
             }
         })
 }
 
-function addInfo () {
+function addInfo (pass) {
     inquirer
         .prompt([
             {
@@ -36,24 +39,25 @@ function addInfo () {
             }
         ]).then(addInfoAns => {
             if (addInfoAns.addInfoChoice === "Department") {
-                addDept()
+                addDept(pass)
             }
             if (addInfoAns.addInfoChoice === "Role") {
-                console.log(addInfoAns.addInfoChoice)
+                addRole(pass)
             }
             if (addInfoAns.addInfoChoice === "Employee") {
                 console.log(addInfoAns.addInfoChoice)
             }
             if (addInfoAns.addInfoChoice === "Go Back") {
-                start()
+                start(pass)
             }
             if (addInfoAns.addInfoChoice === "Quit") {
                 console.log("Goodbye")
+                pass.end()
             }
         })
 }
 
-function addDept () {
+function addDept (pass) {
     inquirer
         .prompt([
             {
@@ -62,7 +66,8 @@ function addDept () {
                 name: "deptName"
             }
         ]).then(deptNameAns => {
-            console.log(deptNameAns.deptName)
+            pass.query("INSERT INTO department (name) VALUES (" + `"`
+            + deptNameAns.deptName + `"` + ")")
             inquirer
                 .prompt([
                     {
@@ -73,12 +78,27 @@ function addDept () {
                     }
                 ]).then(anotherDeptAns => {
                     if (anotherDeptAns.anotherDept === "Yes") {
-                        addDept()
+                        addDept(pass)
                     }
                     if (anotherDeptAns.anotherDept === "No") {
-                        addInfo()
+                        addInfo(pass)
                     }
                 })
+        })
+}
+
+function addRole (pass) {
+    inquirer
+        .prompt([
+            {
+                type: "list",
+                message: "What department is the role a part of?",
+                name: "roleDept",
+                choices: ["Maybe"]
+            }
+        ]).then(addRoleAns => {
+            console.log(addRoleAns)
+            console.log(sqlFunc.getDepartments(pass))
         })
 }
 
