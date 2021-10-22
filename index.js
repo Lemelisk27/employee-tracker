@@ -1,5 +1,4 @@
 const {titleScreen} = require("./util/title")
-// const inquirer = require("inquirer");
 const prompts = require("./util/prompts")
 const mysql = require('mysql2')
 

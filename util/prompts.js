@@ -1,6 +1,4 @@
 const inquirer = require("inquirer");
-const mysql = require('mysql2')
-const sqlFunc = require("../util/sql")
 
 function start (pass) {
     inquirer
@@ -98,7 +96,6 @@ function addRole (pass) {
             }
         ]).then(addRoleAns => {
             console.log(addRoleAns)
-            console.log(sqlFunc.getDepartments(pass))
         })
 }
 
