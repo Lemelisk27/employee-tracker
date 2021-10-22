@@ -9,8 +9,8 @@ const db = mysql.createConnection(
       password: 'passw0rd',
       database: 'company_db'
     },
-  );
+);
 
 titleScreen()
 
-prompts.start(db)
+prompts.start()
