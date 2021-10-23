@@ -4,6 +4,8 @@ This is a command-line application that a user can use to manage their company's
 ## Usage
 From the console run: node index.js
   
+Usage Video [https://watch.screencastify.com/v/RBBiYxcI8RyTNGn1UoO7](https://watch.screencastify.com/v/RBBiYxcI8RyTNGn1UoO7)
+  
 ![Screenshot](assets/images/screenshot.png)
 ## Credits
 Zach Smith - [GitHub Profile](https://github.com/Lemelisk27)  

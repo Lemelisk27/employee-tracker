@@ -1,6 +1,7 @@
 const inquirer = require("inquirer");
 const mysql = require('mysql2')
-var columnify = require('columnify')
+// var columnify = require('columnify')
+const cTable = require('console.table')
 
 const db = mysql.createConnection(
     {
@@ -57,7 +58,7 @@ const firstView = () => {
                     }
                     else {
                         console.log("  ")
-                        console.log(columnify(data))
+                        console.table(data)
                         console.log("  ")
                         firstView()
                     }
@@ -72,7 +73,7 @@ const firstView = () => {
                     }
                     else {
                         console.log("  ")
-                        console.log(columnify(data))
+                        console.table(data)
                         console.log("  ")
                         firstView()
                     }
@@ -89,7 +90,7 @@ const firstView = () => {
                     }
                     else {
                         console.log("  ")
-                        console.log(columnify(data))
+                        console.table(data)
                         console.log("  ")
                         firstView()
                     }
@@ -770,7 +771,7 @@ const deleteInfo = () => {
                 delRole()
             }
             if (delChoiceAns.delChoice === "Employee") {
-                console.log(delChoiceAns.delChoice)
+                delEmp()
             }
             if (delChoiceAns.delChoice === "Go Back") {
                 start()
@@ -947,6 +948,59 @@ const delRole = () => {
                                 })
                         }
                     })
+                })
+        }
+    })
+}
+
+const delEmp = () => {
+    const empArray = []
+    const empNameArray = []
+    db.query(`SELECT id, CONCAT(first_name, " ", last_name) AS name FROM employee`,(err,data)=>{
+        if (err) {
+            console.log(err)
+        }
+        else {
+            for (let i = 0; i < data.length; i++) {
+                empArray.push(data[i])
+                empNameArray.push(data[i].name)
+            }
+            inquirer
+                .prompt([
+                    {
+                        type: "list",
+                        message: "Which employee do you want to delete?",
+                        name: "delEmp",
+                        choices: empNameArray
+                    },
+                    {
+                        type: "list",
+                        message: "Are you sure you want to delete this employee?",
+                        name: "empConfirm",
+                        choices: ["Yes","No"]
+                    }
+                ]).then((empAns)=>{
+                    if (empAns.empConfirm === "No") {
+                        console.log("No changes made.")
+                        deleteInfo()
+                    }
+                    else {
+                        let empID
+                        for (let i = 0; i < empArray.length; i++) {
+                            if (empAns.delEmp === empArray[i].name) {
+                                empID = empArray[i].id
+                            }
+                        }
+                        db.query(`DELETE FROM employee WHERE id = ${empID}`,(err,data)=>{
+                            if (err) {
+                                console.log(err)
+                            }
+                            else {
+                                console.log(`${empAns.delEmp} has been deleted.`)
+                                start()
+                            }
+                        })
+                    }
                 })
         }
     })
