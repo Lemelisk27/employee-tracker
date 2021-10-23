@@ -28,7 +28,7 @@ const start = () => {
                 addInfo()
             }
             if (startAns.start === "Update Information") {
-                console.log(startAns.start)
+                updateInfo()
             }
             if (startAns.start === "Delete Information") {
                 console.log(startAns.start)
@@ -147,6 +147,7 @@ const addDept = () => {
                 if (err) {
                     console.log(err)
                 }
+                console.log("Department Added")
                 addInfo()
             })
         })
@@ -191,6 +192,7 @@ const addRole = () => {
                                     console.log(err)
                                 }
                                 else {
+                                    console.log("Role Added")
                                     addInfo()
                                 }
                             })
@@ -263,6 +265,7 @@ const addEmp = () => {
                                             console.log(err)
                                         }
                                         else {
+                                            console.log("Employee Added")
                                             addInfo()
                                         }
                                     })
@@ -272,6 +275,140 @@ const addEmp = () => {
 
                 }
             })
+        }
+    })
+}
+
+const updateInfo = () => {
+    inquirer
+        .prompt([
+            {
+                type: "list",
+                message: "What would you like to update?",
+                name: "update",
+                choices: ["Department","Role","Employee","Go Back","Quit"]                
+            }
+        ]).then((updateAns) => {
+            if (updateAns.update === "Department") {
+                upDept()
+            }
+            if (updateAns.update === "Role") {
+                upRole()
+            }
+            if (updateAns.update === "Employee") {
+                console.log(updateAns.update)
+            }
+            if (updateAns.update === "Go Back") {
+                start()
+            }
+            if (updateAns.update === "Quit") {
+                console.log("Goodbye")
+                db.end()
+            }
+        })
+}
+
+const upDept = () => {
+    const tempArray = []
+    const deptArray = []
+    db.query(`SELECT * FROM department`,(err,data)=>{
+        if (err) {
+            console.log(err)
+        }
+        else {
+            for (let i = 0; i < data.length; i++) {
+                tempArray.push(data[i].name)                
+                deptArray.push(data[i])
+            }
+            inquirer
+                .prompt([
+                    {
+                        type: "list",
+                        message: "Which department do you want to update?",
+                        name: "deptUp",
+                        choices: tempArray
+                    },
+                    {
+                        type: "input",
+                        message: "What do you want the new department name to be?",
+                        name: "deptName"
+                    }
+                ]).then((deptUpAns)=>{
+                    let deptID
+                    for (let i = 0; i < deptArray.length; i++) {
+                        if (deptUpAns.deptUp === deptArray[i].name) {
+                            deptID = deptArray[i].id
+                        }
+                    }
+                    db.query(`UPDATE department SET name = "${deptUpAns.deptName}" WHERE id = ${deptID}`,(err,data)=>{
+                        if (err) {
+                            console.log(err)
+                        }
+                        else {
+                            console.log(`Department name changed to: ${deptUpAns.deptName}`)
+                            updateInfo()
+                        }
+                    })
+                })
+        }
+    })
+}
+
+const upRole = () => {
+    inquirer
+        .prompt([
+            {
+                type: "list",
+                message: "Would would you like to change about this Role?",
+                name: "upRoleChange",
+                choices: ["Name","Salary","Assigned Department","Go Back","Quit"]
+            }
+        ]).then((upRoleAns)=>{
+            if (upRoleAns.upRoleChange === "Name") {
+                upRoleName()
+            }
+            if (upRoleAns.upRoleChange === "Salary") {
+                console.log(upRoleAns.upRoleChange)
+            }
+            if (upRoleAns.upRoleChange === "Assigned Department") {
+                console.log(upRoleAns.upRoleChange)
+            }
+            if (upRoleAns.upRoleChange === "Go Back") {
+                updateInfo()
+            }
+            if (upRoleAns.upRoleChange === "Quit") {
+                console.log("Goodbye")
+                db.end()
+            }
+        })
+}
+
+const upRoleName = () => {
+    const roleArray = []
+    const roleNameArray = []
+    db.query(`SELECT id, title FROM role`,(err,data)=>{
+        if (err) {
+            console.log(err)
+        }
+        else {
+            for (let i = 0; i < data.length; i++) {
+                roleArray.push(data[i])
+                roleNameArray.push(data[i].title)
+            }
+            inquirer
+                .prompt([
+                    {
+                        type: "list",
+                        message: "Which role do you want to change?",
+                        name: "roleChoice",
+                        choices: roleNameArray
+                    },
+                    {
+                        type: "input",
+                        message: "What do you want to change the name to?",
+                        name: "newRoleName"
+                    }
+                ])
         }
     })
 }
