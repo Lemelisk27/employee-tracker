@@ -767,7 +767,7 @@ const deleteInfo = () => {
                 delDept()
             }
             if (delChoiceAns.delChoice === "Role") {
-                console.log(delChoiceAns.delChoice)
+                delRole()
             }
             if (delChoiceAns.delChoice === "Employee") {
                 console.log(delChoiceAns.delChoice)
@@ -816,7 +816,7 @@ const delDept = () => {
                                 .prompt([
                                     {
                                         type: "list",
-                                        message: "If there are any roles assigned to this department which department do you want to assign them to?",
+                                        message: "If there are any roles assigned to this department, which department do you want to assign them to?",
                                         name: "newDept",
                                         choices: newArray
                                     },
@@ -838,8 +838,6 @@ const delDept = () => {
                                             if(newDeptAns.newDept === deptArray[i].name){
                                                 newDeptId = deptArray[i].id
                                             }
-                                        }
-                                        for (let i = 0; i < deptArray.length; i++) {
                                             if (delDeptAns.delDept === deptArray[i].name) {
                                                 delDeptId = deptArray[i].id
                                             }
@@ -860,6 +858,91 @@ const delDept = () => {
                                                 })
                                             }
                                         })                                      
+                                    }
+                                })
+                        }
+                    })
+                })
+        }
+    })
+}
+
+const delRole = () => {
+    const roleArray = []
+    const roleNameArray = []
+    db.query(`SELECT id, title FROM role`,(err,data)=>{
+        if (err) {
+            console.log(err)
+        }
+        else {
+            for (let i = 0; i < data.length; i++) {
+                roleArray.push(data[i])
+                roleNameArray.push(data[i].title)
+            }
+            inquirer
+                .prompt([
+                    {
+                        type: "list",
+                        message: "Which role would you like to delete?",
+                        name: "delRole",
+                        choices: roleNameArray
+                    }
+                ]).then((delRoleAns)=>{
+                    const newArray = []
+                    db.query(`SELECT title FROM role WHERE title NOT IN ("${delRoleAns.delRole}")`,(err,data)=>{
+                        if (err) {
+                            console.log(err)
+                        }
+                        else {
+                            for (let i = 0; i < data.length; i++) {
+                                newArray.push(data[i].title)
+                            }
+                            inquirer
+                                .prompt([
+                                    {
+                                        type: "list",
+                                        message: "If there are employees assigned to this role, which role do you want to assign them to?",
+                                        name: "newRole",
+                                        choices: newArray
+                                    },
+                                    {
+                                        type: "list",
+                                        message: "Are you sure you want to delete this role?",
+                                        name: "roleConfirm",
+                                        choices: ["Yes","No"]
+                                    }
+                                ]).then((newAns)=>{
+                                    if (newAns.roleConfirm === "No") {
+                                        console.log("No changes made.")
+                                        deleteInfo()
+                                    }
+                                    else {
+                                        let newID
+                                        let oldID
+                                        for (let i = 0; i < roleArray.length; i++) {
+                                            if (newAns.newRole === roleArray[i].title) {
+                                                newID = roleArray[i].id
+                                            }
+                                            if (delRoleAns.delRole === roleArray[i].title) {
+                                                oldID = roleArray[i].id
+                                            }
+                                        }
+                                        db.query(`UPDATE employee SET role_id = ${newID} WHERE role_id = ${oldID}`,(err,data)=>{
+                                            if (err) {
+                                                console.log(err)
+                                            }
+                                            else {
+                                                db.query(`DELETE FROM role WHERE id = ${oldID}`,(err,data)=>{
+                                                    if (err) {
+                                                        console.log(err)
+                                                    }
+                                                    else {
+                                                        console.log(`The ${delRoleAns.delRole} role has been deleted. Employees re-assigned to ${newAns.newRole}.`)
+                                                        start()
+                                                    }
+                                                })
+                                            }
+                                        })
                                     }
                                 })
                         }
