@@ -31,7 +31,7 @@ const start = () => {
                 updateInfo()
             }
             if (startAns.start === "Delete Information") {
-                console.log(startAns.start)
+                deleteInfo()
             }
             if (startAns.start === "Quit") {
                 console.log("Goodbye")
@@ -749,6 +749,122 @@ const upEmpMgr = () => {
                         })
                 }
             })
+        }
+    })
+}
+
+const deleteInfo = () => {
+    inquirer
+        .prompt([
+            {
+                type: "list",
+                message: "What do you want to delete?",
+                name: "delChoice",
+                choices: ["Department","Role","Employee","Go Back","Quit"]
+            }
+        ]).then((delChoiceAns)=>{
+            if (delChoiceAns.delChoice === "Department") {
+                delDept()
+            }
+            if (delChoiceAns.delChoice === "Role") {
+                console.log(delChoiceAns.delChoice)
+            }
+            if (delChoiceAns.delChoice === "Employee") {
+                console.log(delChoiceAns.delChoice)
+            }
+            if (delChoiceAns.delChoice === "Go Back") {
+                start()
+            }
+            if (delChoiceAns.delChoice === "Quit") {
+                console.log("Goodbye")
+                db.end()
+            }
+        })
+}
+
+const delDept = () => {
+    const deptArray = []
+    const deptNameArray = []
+    db.query(`SELECT * FROM department`,(err,data)=>{
+        if (err) {
+            console.log(err)
+        }
+        else {
+            for (let i = 0; i < data.length; i++) {
+                deptArray.push(data[i])
+                deptNameArray.push(data[i].name)
+            }
+            inquirer
+                .prompt([
+                    {
+                        type: "list",
+                        message: "Which department do you want to delete?",
+                        name: "delDept",
+                        choices: deptNameArray
+                    }
+                ]).then((delDeptAns)=>{
+                    const newArray = []
+                    db.query(`SELECT name FROM department WHERE name NOT IN ("${delDeptAns.delDept}")`,(err,data)=>{
+                        if (err) {
+                            console.log(err)
+                        }
+                        else {
+                            for (let i = 0; i < data.length; i++) {
+                                newArray.push(data[i].name)
+                            }
+                            inquirer
+                                .prompt([
+                                    {
+                                        type: "list",
+                                        message: "If there are any roles assigned to this department which department do you want to assign them to?",
+                                        name: "newDept",
+                                        choices: newArray
+                                    },
+                                    {
+                                        type: "list",
+                                        message: "Are you sure you want to delete this department?",
+                                        name: "deptConfirm",
+                                        choices: ["Yes","No"]
+                                    }
+                                ]).then((newDeptAns)=>{
+                                    if (newDeptAns.deptConfirm === "No") {
+                                        console.log("No changes made.")
+                                        deleteInfo()
+                                    }
+                                    else {
+                                        let newDeptId
+                                        let delDeptId
+                                        for (let i = 0; i < deptArray.length; i++) {
+                                            if(newDeptAns.newDept === deptArray[i].name){
+                                                newDeptId = deptArray[i].id
+                                            }
+                                        }
+                                        for (let i = 0; i < deptArray.length; i++) {
+                                            if (delDeptAns.delDept === deptArray[i].name) {
+                                                delDeptId = deptArray[i].id
+                                            }
+                                        }
+                                        db.query(`UPDATE role SET department_id = ${newDeptId} WHERE department_id = ${delDeptId}`,(err,data)=>{
+                                            if (err) {
+                                                console.log(err)
+                                            }
+                                            else {
+                                                db.query(`DELETE FROM department WHERE id = ${delDeptId}`,(err,data)=>{
+                                                    if (err) {
+                                                        console.log(err)
+                                                    }
+                                                    else {
+                                                        console.log(`The ${delDeptAns.delDept} department has been deleted. Roles re-assigned to ${newDeptAns.newDept}.`)
+                                                        start()
+                                                    }
+                                                })
+                                            }
+                                        })                                      
+                                    }
+                                })
+                        }
+                    })
+                })
         }
     })
 }
