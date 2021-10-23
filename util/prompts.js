@@ -119,10 +119,10 @@ const addInfo = () => {
                 addDept()
             }
             if (newAddAns.newAdd === "Role") {
-                console.log(newAddAns.newAdd)
+                addRole()
             }
             if (newAddAns.newAdd === "Employee") {
-                console.log(newAddAns.newAdd)
+                addEmp()
             }
             if (newAddAns.newAdd === "Go Back") {
                 start()
@@ -150,6 +150,130 @@ const addDept = () => {
                 addInfo()
             })
         })
+}
+
+const addRole = () => {
+    db.query(`select name from department`,(err,data)=>{
+        if (err) {
+            console.log
+        }
+        else {
+            const tempArray = []
+            for (let i = 0; i < data.length; i++) {
+                tempArray.push(data[i].name)                
+            }
+            inquirer
+                .prompt([
+                    {
+                        type: "list",
+                        message: "What department is the role a part of?",
+                        name: "roleDept",
+                        choices: tempArray
+                    },
+                    {
+                        type: "input",
+                        message: "What is the title of the new role?",
+                        name: "roleTitle"
+                    },
+                    {
+                        type: "input",
+                        message: "What is the salary for the new role?",
+                        name: "roleSalary"
+                    }
+                ]).then((roleDeptAns)=>{
+                    db.query(`SELECT id FROM department where name = "${roleDeptAns.roleDept}"`,(err,data)=>{
+                        if (err) {
+                            console.log(err)
+                        }
+                        else {
+                            db.query(`INSERT INTO role (title,salary,department_id) VALUES ("${roleDeptAns.roleTitle}","${roleDeptAns.roleSalary}",${data[0].id})`,(err,data) => {
+                                if (err) {
+                                    console.log(err)
+                                }
+                                else {
+                                    addInfo()
+                                }
+                            })
+                        }
+                    })
+                })
+        }
+    })
+}
+
+const addEmp = () => {
+    db.query(`SELECT title FROM role`,(err,data)=>{
+        if (err) {
+            console.log(err)
+        }
+        else {
+            const tempArray = []
+            for (let i = 0; i < data.length; i++) {
+                tempArray.push(data[i].title)                
+            }
+            db.query(`SELECT id, CONCAT(first_name," ",last_name) AS name FROM employee WHERE manager_id IS NULL`,(err,data)=> {
+                if (err) {
+                    console.log(err)
+                }
+                else {
+                    const mgrArray = ["None"]
+                    const newArray = []
+                    for (let i = 0; i < data.length; i++) {
+                        mgrArray.push(data[i].name)
+                        newArray.push(data[i])
+                    }
+                    inquirer
+                        .prompt([
+                            {
+                                type: "list",
+                                message: "Please select a role for the new employee.",
+                                name: "empRole",
+                                choices: tempArray
+                            },
+                            {
+                                type: "input",
+                                message: "What is their first name?",
+                                name: "empFirst"
+                            },
+                            {
+                                type: "input",
+                                message: "What is their last name?",
+                                name: "empLast"
+                            },
+                            {
+                                type: "list",
+                                message: "Who is their manager?",
+                                name: "empMgr",
+                                choices: mgrArray
+                            }
+                        ]).then((empAns) => {
+                            let mgrId = null
+                            for (let i = 0; i < newArray.length; i++) {
+                                if (newArray[i].name === empAns.empMgr) {
+                                    mgrId = newArray[i].id
+                                }                          
+                            }
+                            db.query(`SELECT id FROM role WHERE title = "${empAns.empRole}"`,(err,data)=>{
+                                if (err) {
+                                    console.log(err)
+                                }
+                                else {
+                                    db.query(`INSERT INTO employee (first_name,last_name,role_id,manager_id) VALUES ("${empAns.empFirst}","${empAns.empLast}",${data[0].id},${mgrId})`,(err,data) => {
+                                        if (err) {
+                                            console.log(err)
+                                        }
+                                        else {
+                                            addInfo()
+                                        }
+                                    })
+                                }
+                            })
+                        })
+
+                }
+            })
+        }
+    })
 }
 
 module.exports = {
