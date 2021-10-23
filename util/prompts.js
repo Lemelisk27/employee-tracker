@@ -296,7 +296,7 @@ const updateInfo = () => {
                 upRole()
             }
             if (updateAns.update === "Employee") {
-                console.log(updateAns.update)
+                upEmp()
             }
             if (updateAns.update === "Go Back") {
                 start()
@@ -346,7 +346,7 @@ const upDept = () => {
                         }
                         else {
                             console.log(`Department name changed to: ${deptUpAns.deptName}`)
-                            updateInfo()
+                            start()
                         }
                     })
                 })
@@ -368,10 +368,10 @@ const upRole = () => {
                 upRoleName()
             }
             if (upRoleAns.upRoleChange === "Salary") {
-                console.log(upRoleAns.upRoleChange)
+                upRoleSalary()
             }
             if (upRoleAns.upRoleChange === "Assigned Department") {
-                console.log(upRoleAns.upRoleChange)
+                upRoleDept()
             }
             if (upRoleAns.upRoleChange === "Go Back") {
                 updateInfo()
@@ -408,7 +408,347 @@ const upRoleName = () => {
                         message: "What do you want to change the name to?",
                         name: "newRoleName"
                     }
-                ])
+                ]).then((roleNameAns)=>{
+                    let selectRole
+                    for (let i = 0; i < roleArray.length; i++) {
+                        if (roleNameAns.roleChoice === roleArray[i].title) {
+                            selectRole = roleArray[i].id
+                        }
+                    }
+                    db.query(`UPDATE role SET title = "${roleNameAns.newRoleName}" WHERE id = ${selectRole}`,(err,data)=>{
+                        if (err) {
+                            console.log(err)
+                        }
+                        else {
+                            console.log(`Role name updated to: ${roleNameAns.newRoleName}`)
+                            start()
+                        }
+                    })
+                })
+        }
+    })
+}
+
+const upRoleSalary = () => {
+    const roleArray = []
+    const roleNameArray = []
+    db.query(`SELECT id, title FROM role`,(err,data)=>{
+        if (err) {
+            console.log(err)
+        }
+        else {
+            for (let i = 0; i < data.length; i++) {
+                roleArray.push(data[i])
+                roleNameArray.push(data[i].title)
+            }
+            inquirer
+                .prompt([
+                    {
+                        type: "list",
+                        message: "Which role do you want to change?",
+                        name: "roleChoice",
+                        choices: roleNameArray
+                    },
+                    {
+                        type: "input",
+                        message: "What do you want to change the salary to?",
+                        name: "roleSalary"
+                    }
+                ]).then((roleSalaryAns) => {
+                    let roleID
+                    for (let i = 0; i < roleArray.length; i++) {
+                        if (roleSalaryAns.roleChoice === roleArray[i].title) {
+                            roleID = roleArray[i].id
+                        }
+                    }
+                    db.query(`UPDATE role SET salary = ${roleSalaryAns.roleSalary} WHERE id = ${roleID}`,(err,data)=>{
+                        if (err) {
+                            console.log(err)
+                        }
+                        else {
+                            console.log(`${roleSalaryAns.roleChoice}'s salary changed to: ${roleSalaryAns.roleSalary}`)
+                            start()
+                        }
+                    })
+                })
+        }
+    })
+}
+
+const upRoleDept = () => {
+    const deptArray = []
+    const deptNameArray = []
+    db.query(`SELECT * FROM department`,(err,data)=>{
+        if (err) {
+            console.log(err)
+        }
+        else {
+            for (let i = 0; i < data.length; i++) {
+                deptArray.push(data[i])
+                deptNameArray.push(data[i].name)
+            }
+            const roleArray = []
+            const roleNameArray = []
+            db.query(`SELECT id, title FROM role`,(err,data)=>{
+                if (err) {
+                    console.log(err)
+                }
+                else {
+                    for (let i = 0; i < data.length; i++) {
+                        roleArray.push(data[i])
+                        roleNameArray.push(data[i].title)
+                    }
+                    inquirer
+                        .prompt([
+                            {
+                                type: "list",
+                                message: "Which role do you want to change?",
+                                name: "roleChange",
+                                choices: roleNameArray
+                            },
+                            {
+                                type: "list",
+                                message: "Which departemnt do you want to assign it to?",
+                                name: "roleDept",
+                                choices: deptNameArray
+                            }
+                        ]).then((roleDeptAns) => {
+                            let deptID
+                            let roleID
+                            for (let i = 0; i < deptArray.length; i++) {
+                                if (roleDeptAns.roleDept === deptArray[i].name){
+                                    deptID = deptArray[i].id
+                                }
+                            }
+                            for (let i = 0; i < roleArray.length; i++) {
+                                if (roleDeptAns.roleChange === roleArray[i].title) {
+                                    roleID = roleArray[i].id
+                                }
+                            }
+                            db.query(`UPDATE role SET department_id = ${deptID} WHERE id = ${roleID}`,(err,data)=>{
+                                if (err) {
+                                    console.log(err)
+                                }
+                                else {
+                                    console.log(`${roleDeptAns.roleChange} changed to the ${roleDeptAns.roleDept} department.`)
+                                    start()
+                                }
+                            })
+                        })
+                }
+            })
+        }
+    })
+}
+
+const upEmp = () => {
+    inquirer
+        .prompt([
+            {
+                type: "list",
+                message: "What do you want to change about this employee?",
+                name: "empChange",
+                choices: ["Name","Role","Manager","Go Back","Quit"]
+            }
+        ]).then((empChangeAns)=>{
+            if (empChangeAns.empChange === "Name") {
+                upEmpName()
+            }
+            if (empChangeAns.empChange === "Role") {
+                upEmpRole()
+            }
+            if (empChangeAns.empChange === "Manager") {
+                upEmpMgr()
+            }
+            if (empChangeAns.empChange === "Go Back") {
+                updateInfo()
+            }
+            if (empChangeAns.empChange === "Quit") {
+                console.log("Goodbye")
+                db.end()
+            }
+        })
+}
+
+const upEmpName = () => {
+    const empArray = []
+    const empNameArray = []
+    db.query(`SELECT id, CONCAT(first_name, " ", last_name) AS name FROM employee`,(err,data)=>{
+        if (err) {
+            console.log(err)
+        }
+        else {
+            for (let i = 0; i < data.length; i++) {
+                empArray.push(data[i])
+                empNameArray.push(data[i].name)
+            }
+            inquirer
+                .prompt([
+                    {
+                        type: "list",
+                        message: "Which employee do you want to update?",
+                        name: "empChange",
+                        choices: empNameArray
+                    },
+                    {
+                        type: "input",
+                        message: "What's their first name?",
+                        name: "empFirst"
+                    },
+                    {
+                        type: "input",
+                        message: "What's their last name?",
+                        name: "empLast"
+                    }
+                ]).then((empNameAns)=>{
+                    let empID
+                    for (let i = 0; i < empArray.length; i++) {
+                        if (empNameAns.empChange === empArray[i].name){
+                            empID = empArray[i].id
+                        }
+                    }
+                    db.query(`UPDATE employee SET first_name = "${empNameAns.empFirst}", last_name = "${empNameAns.empLast}" WHERE id = ${empID}`,(err,data)=>{
+                        if (err) {
+                            console.log(err)
+                        }
+                        else {
+                            console.log(`${empNameAns.empChange}'s name changed to ${empNameAns.empFirst} ${empNameAns.empLast}`)
+                            start()
+                        }
+                    })
+                })
+        }
+    })
+}
+
+const upEmpRole = () => {
+    const empArray = []
+    const empNameArray = []
+    db.query(`SELECT id, CONCAT(first_name, " ", last_name) AS name, role_id AS role FROM employee`,(err,data)=>{
+        if (err) {
+            console.log(err)
+        }
+        else {
+            for (let i = 0; i < data.length; i++) {
+                empArray.push(data[i])
+                empNameArray.push(data[i].name)
+            }
+            const roleArray = []
+            const roleNameArray = []
+            db.query(`SELECT id, title FROM role`,(err,data)=>{
+                if (err) {
+                    console.log(err)
+                }
+                else {
+                    for (let i = 0; i < data.length; i++) {
+                        roleArray.push(data[i])
+                        roleNameArray.push(data[i].title)
+                    }
+                    inquirer
+                        .prompt([
+                            {
+                                type: "list",
+                                message: "Which employee do you want to change?",
+                                name: "empChange",
+                                choices: empNameArray
+                            },
+                            {
+                                type: "list",
+                                message: "What do you want to change their role to?",
+                                name: "empRole",
+                                choices: roleNameArray
+                            }
+                        ]).then((empRoleAns)=>{
+                            let empID
+                            for (let i = 0; i < empArray.length; i++) {
+                                if (empRoleAns.empChange === empArray[i].name) {
+                                    empID = empArray[i].id
+                                }
+                            }
+                            let roleID
+                            for (let i = 0; i < roleArray.length; i++) {
+                                if (empRoleAns.empRole === roleArray[i].title) {
+                                    roleID = roleArray[i].id
+                                }
+                            }
+                            db.query(`UPDATE employee SET role_id = ${roleID} WHERE id = ${empID}`,(err,data)=>{
+                                if (err) {
+                                    console.log(err)
+                                }
+                                else {
+                                    console.log(`${empRoleAns.empChange}'s role changed to ${empRoleAns.empRole}`)
+                                    start()
+                                }
+                            })
+                        })
+                }
+            })
+        }
+    })
+}
+
+const upEmpMgr = () => {
+    const mgrArray = []
+    const mgrNameArray = []
+    db.query(`SELECT id, CONCAT(first_name, " ", last_name) AS name FROM employee WHERE manager_id IS NULL`,(err,data)=>{
+        if (err) {
+            console.log(err)
+        }
+        else {
+            for (let i = 0; i < data.length; i++) {
+                mgrArray.push(data[i])
+                mgrNameArray.push(data[i].name)
+            }
+            const empArray = []
+            const empNameArray = []
+            db.query(`SELECT id, CONCAT(first_name, " ", last_name) AS name FROM employee`,(err,data)=>{
+                if (err) {
+                    console.log(err)
+                }
+                else {
+                    for (let i = 0; i < data.length; i++) {
+                        empArray.push(data[i])
+                        empNameArray.push(data[i].name)
+                    }
+                    inquirer
+                        .prompt([
+                            {
+                                type: "list",
+                                message: "Which employee do you want to change?",
+                                name: "empChange",
+                                choices: empNameArray
+                            },
+                            {
+                                type: "list",
+                                message: "Which manager do you want to assign this employee to?",
+                                name: "empMgr",
+                                choices: mgrNameArray
+                            }
+                        ]).then((empMgrAns)=>{
+                            let empID
+                            for (let i = 0; i < empArray.length; i++) {
+                                if (empMgrAns.empChange === empArray[i].name) {
+                                    empID = empArray[i].id
+                                }
+                            }
+                            let mgrId
+                            for (let i = 0; i < mgrArray.length; i++) {
+                                if (empMgrAns.empMgr === mgrArray[i].name) {
+                                    mgrId = mgrArray[i].id
+                                }
+                            }
+                            db.query(`UPDATE employee SET manager_id = ${mgrId} WHERE id = ${empID}`,(err,data)=>{
+                                if (err) {
+                                    console.log(err)
+                                }
+                                else {
+                                    console.log(`${empMgrAns.empChange} is now assigned to ${empMgrAns.empMgr}`)
+                                    start()
+                                }
+                            })
+                        })
+                }
+            })
         }
     })
 }
