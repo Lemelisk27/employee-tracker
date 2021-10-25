@@ -48,7 +48,7 @@ const firstView = () => {
                 type: "list",
                 message: "What would you like to view?",
                 name: "firstView",
-                choices: ["Departments","Roles","Employees","Go Back","Quit"]
+                choices: ["Departments","Roles","Employees","Salaries by Department","Employees by Manager","Employees by Department","Go Back","Quit"]
             }
         ]).then((firstViewAns) => {
             if (firstViewAns.firstView === "Departments") {
@@ -96,6 +96,29 @@ const firstView = () => {
                     }
                 })
             }
+            if (firstViewAns.firstView === "Salaries by Department"){
+                db.query(`SELECT department.name AS Department, sum(role.salary) as "Total Salaries"
+                FROM employee
+                JOIN role ON employee.role_id = role.id
+                JOIN department ON role.department_id = department.id
+                GROUP BY department.name`,(err,data)=>{
+                    if (err) {
+                        console.log(err)
+                    }
+                    else {
+                        console.log("  ")
+                        console.table(data)
+                        console.log("  ")
+                        firstView()
+                    }
+                })
+            }
+            if (firstViewAns.firstView === "Employees by Manager") {
+                empByMgr()
+            }
+            if (firstViewAns.firstView === "Employees by Department") {
+                empByDept()
+            }
             if (firstViewAns.firstView === "Go Back") {
                 start()
             }
@@ -104,6 +127,103 @@ const firstView = () => {
                 db.end()
             }
         })
+}
+
+const empByMgr = () => {
+    const mgrArray = []
+    const mgrNameArray = []
+    db.query(`SELECT id, CONCAT(first_name, " ", last_name) AS name FROM employee WHERE manager_id IS NULL`,(err,data)=>{
+        if (err) {
+            console.log(err)
+        }
+        else {
+            for (let i = 0; i < data.length; i++) {
+                mgrArray.push(data[i])
+                mgrNameArray.push(data[i].name)
+            }
+            inquirer
+                .prompt([
+                    {
+                        type: "list",
+                        message: "Which Manager's Employees do you want to view?",
+                        name: "mgr",
+                        choices: mgrNameArray
+                    }
+                ]).then((mgrAns)=>{
+                    let mgrID
+                    for (let i = 0; i < mgrArray.length; i++) {
+                        if (mgrAns.mgr === mgrArray[i].name) {
+                            mgrID = mgrArray[i].id
+                        }
+                    }
+                    console.log("  ")
+                    console.log(`Employees Assigned to ${mgrAns.mgr}:`)
+                    console.log("  ")
+                    db.query(`SELECT employee.id AS ID, CONCAT (employee.first_name, " ", employee.last_name) AS Employee, role.title AS "Job Title", department.name AS Department, role.salary AS Salary
+                    FROM employee
+                    JOIN role ON employee.role_id = role.id
+                    JOIN department ON role.department_id = department.id
+                    WHERE employee.manager_id = ${mgrID}`,(err,data)=>{
+                        if(err) {
+                            console.log(err)
+                        }
+                        else {
+                            console.table(data)
+                            firstView()
+                        }
+                    })
+                })
+        }
+    })
+}
+
+const empByDept = () => {
+    const deptArray = []
+    const deptNameArray = []
+    db.query(`SELECT * FROM department`,(err,data)=>{
+        if (err) {
+            console.log(err)
+        }
+        else {
+            for (let i = 0; i < data.length; i++) {
+                deptArray.push(data[i])
+                deptNameArray.push(data[i].name)
+            }
+            inquirer
+                .prompt([
+                    {
+                        type: "list",
+                        message: "Which department do you want to view?",
+                        name: "deptChoice",
+                        choices: deptNameArray 
+                    }
+                ]).then((deptAns)=>{
+                    let deptID
+                    for (let i = 0; i < deptArray.length; i++) {
+                        if (deptAns.deptChoice === deptArray[i].name) {
+                            deptID = deptArray[i].id
+                        }
+                    }
+                    db.query(`SELECT employee.id AS ID, CONCAT(employee.first_name, " ", employee.last_name) AS Employee, role.title AS "Job Title", department.name AS Department, role.salary AS Salary, CONCAT(e.first_name, " ", e.last_name) AS Manager
+                    FROM employee
+                    JOIN role ON employee.role_id = role.id
+                    JOIN department ON role.department_id = department.id
+                    LEFT JOIN employee e ON employee.manager_id = e.id
+                    WHERE department.id = ${deptID}`,(err,data)=>{
+                        if (err) {
+                            console.log(err)
+                        }
+                        else {
+                            console.log("  ")
+                            console.log(`The employees assigned to the ${deptAns.deptChoice} department are:`)
+                            console.log("  ")
+                            console.table(data)
+                            firstView()
+                        }
+                    })
+                })
+        }
+    })
 }
 
 const addInfo = () => {
